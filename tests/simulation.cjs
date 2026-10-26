@@ -1,0 +1,8 @@
+const fs=require('node:fs');const vm=require('node:vm');const assert=require('node:assert/strict');
+const elements={};const get=id=>elements[id]??=( {value:id==='speed'?'1':'',checked:false,addEventListener(){},innerHTML:'',textContent:'',disabled:false});
+const ctx=vm.createContext({document:{getElementById:get},performance:{now:()=>0},requestAnimationFrame(){},console});vm.runInContext(fs.readFileSync('app.js','utf8'),ctx);const run=s=>vm.runInContext(s,ctx);
+run('for(let i=0;i<12000&&!collision&&!planes.every(p=>p.done);i++)step(.1)');assert.equal(run('collision'),false);assert.equal(run('planes.every(p=>p.done)'),true,'Normal traffic must complete without deadlock');
+run("reset(); $('missing').value='DLH204'; reset()");assert.equal(run("map(true).includes('data-plane=\"DLH204\"')"),false);assert.equal(run("map(false).includes('data-plane=\"DLH204\"')"),true);assert.equal(run("planes.filter(p=>p.sensor==='stale').length"),0);
+run("$('missing').value='';reset();step(1);lose(planes[0]);");const last=run('planes[0].last.x');run('step(1)');assert.equal(run('planes[0].last.x'),last);assert.equal(run("planes[0].sensor"),'stale');
+run("selected='DLH204';override('hold')");const x=run('planes[0].x');run('step(1)');assert.equal(run('planes[0].x'),x);assert.equal(run("planes[0].mode"),'manual');run("$('return').onclick()");assert.equal(run("planes[0].mode"),'manual');run("$('restore').onclick();$('return').onclick()");assert.equal(run("planes[0].mode"),'auto');
+console.log('PASS: normal traffic completes; missing track stays hidden; stale position freezes; override stops; return requires current sensor data.');
